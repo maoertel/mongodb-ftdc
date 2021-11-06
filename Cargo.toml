@@ -1,12 +1,13 @@
 [package]
 name = "ftdc"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Mathias Oertel <mathias.oertel@pm.me>"]
 description = "Crate to download ftdc data for mongodb clusters."
+documentation = "https://docs.rs/ftdc"
 readme = "README_LIB.md"
 keywords = ["mongodb", "ftdc", "profiling"]
-categories = ["Command-line interface", "Command line utilities"]
+categories = ["command-line-interface", "command-line-utilities"]
 license = "MIT"
 repository = "https://github.com/maoertel/ftdc"
 

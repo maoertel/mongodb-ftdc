@@ -11,7 +11,7 @@ use service::{FtdcDataService, FtdcLoader};
 /// Loading FTDC data (full time diagnostic data capture) from a particular db cluster to
 /// investigate deeper (e.g. with keyhole).
 #[derive(Parser)]
-#[clap(version = "0.1.0", author = "Mathias Oertel <mathias.oertel@pm.me>")]
+#[clap(version = "0.1.1", author = "Mathias Oertel <mathias.oertel@pm.me>")]
 struct Opts {
   /// The group key (or: project id) the respective cluster belongs too. It is encoded into
   /// the link you get from atlas when selecting the specific cluster on Atlas UI (e.g.

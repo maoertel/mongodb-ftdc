@@ -8,7 +8,7 @@ For the documentation of the lib crate functionality go [here](/README_LIB.md).
 
 ## CLI tool to download mongodb FTDC data
 
-Command line tool to download FTDC data from mongodb clusters 
+Command line tool to download FTDC data from mongodb clusters.
 
 ### Usage
 
