@@ -9,7 +9,7 @@ readme = "README_LIB.md"
 keywords = ["mongodb", "ftdc", "profiling"]
 categories = ["command-line-interface", "command-line-utilities"]
 license = "MIT"
-repository = "https://github.com/maoertel/ftdc"
+repository = "https://github.com/maoertel/mongodb-ftdc"
 
 [dependencies]
 async-recursion = "0.3"
