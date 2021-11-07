@@ -19,6 +19,20 @@ use error::Error;
 use model::{Clusters, JobId, JobState, JobStatus, LogCollectionJob, Shard};
 use progress::SpinnerHelper;
 
+#[cfg(test)]
+use mockito;
+
+#[cfg(not(test))]
+const MONGODB_URL: &str = "https://cloud.mongodb.com/api/atlas/v1.0/groups";
+
+fn url() -> String {
+  #[cfg(not(test))]
+  let url = String::from(MONGODB_URL);
+  #[cfg(test)]
+  let url = mockito::server_url();
+  url
+}
+
 #[async_trait]
 pub trait FtdcLoader {
   async fn get_ftdc_data(
@@ -81,10 +95,7 @@ impl FtdcDataService {
   ) -> Result<String, Error> {
     let processes = self
       .client
-      .get(&format!(
-        "https://cloud.mongodb.com/api/atlas/v1.0/groups/{}/processes",
-        group_key
-      ))
+      .get(&format!("{}/{}/processes", url(), group_key))
       .send_with_digest_auth(public, private)
       .await?;
 
@@ -128,10 +139,7 @@ impl FtdcDataService {
     let body = serde_json::to_string::<LogCollectionJob>(&LogCollectionJob::from(replica_set, byte_size))?;
     let create_ftdc_job = self
       .client
-      .post(format!(
-        "https://cloud.mongodb.com/api/atlas/v1.0/groups/{}/logCollectionJobs",
-        group_key
-      ))
+      .post(format!("{}/{}/logCollectionJobs", url(), group_key))
       .header("Content-type", "application/json; charset=utf-8")
       .body(body)
       .send_with_digest_auth(public, private)
@@ -160,10 +168,7 @@ impl FtdcDataService {
   ) -> Result<String, Error> {
     let check_job_status = self
       .client
-      .get(&format!(
-        "https://cloud.mongodb.com/api/atlas/v1.0/groups/{}/logCollectionJobs/{}",
-        group_key, job_id
-      ))
+      .get(&format!("{}/{}/logCollectionJobs/{}", url(), group_key, job_id))
       .send_with_digest_auth(public, private)
       .await?;
 
@@ -206,10 +211,7 @@ impl FtdcDataService {
     public: &str,
     private: &str,
   ) -> Result<String, Error> {
-    let download_url = format!(
-      "https://cloud.mongodb.com/api/atlas/v1.0/groups/{}/logCollectionJobs/{}/download",
-      group_key, job_id
-    );
+    let download_url = format!("{}/{}/logCollectionJobs/{}/download", url(), group_key, job_id);
     let response = self.client.get(&download_url).send_with_digest_auth(public, private).await?;
 
     match response.status() {
@@ -234,5 +236,177 @@ impl FtdcDataService {
         response.text().await?
       ))),
     }
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use crate::model::{Clusters, JobId, JobStatus, Shard};
+  use crate::service::FtdcDataService;
+  use indicatif::ProgressBar;
+  use mockito::mock;
+  use reqwest::Client;
+
+  fn ftdc_data_service() -> FtdcDataService {
+    FtdcDataService { client: Client::new() }
+  }
+
+  #[tokio::test]
+  async fn given_explicit_replica_set_name_when_get_replica_set_then_get_the_same_name() {
+    // Given
+    let clusters = Clusters {
+      results: vec![Shard {
+        userAlias: "something that does not matter".to_string(),
+        typeName: "".to_string(),
+        replicaSetName: Some("my-replica-set".to_string()),
+      }],
+    };
+    let _m = mock("GET", "/my-group-key/processes")
+      .with_status(200)
+      .with_header("content-type", "application/json; charset=utf-8")
+      .with_body(serde_json::to_string(&clusters).unwrap())
+      .create();
+
+    // When
+    let response = ftdc_data_service()
+      .get_replica_set("my-group-key", "my-replica-set", "", "")
+      .await
+      .unwrap();
+
+    // Then
+    assert_eq!(&response, "my-replica-set");
+  }
+
+  #[tokio::test]
+  async fn given_shard_name_when_get_replica_set_then_get_corresponding_replica_set() {
+    // Given
+    let clusters = Clusters {
+      results: vec![Shard {
+        userAlias: "my-rs-shard-00".to_string(),
+        typeName: "".to_string(),
+        replicaSetName: Some("my-replica-set".to_string()),
+      }],
+    };
+    let _m = mock("GET", "/my-group-key/processes")
+      .with_status(200)
+      .with_header("content-type", "application/json; charset=utf-8")
+      .with_body(serde_json::to_string(&clusters).unwrap())
+      .create();
+
+    // When
+    let response = ftdc_data_service()
+      .get_replica_set("my-group-key", "my-rs-shard-00", "", "")
+      .await
+      .unwrap();
+
+    // Then
+    assert_eq!(&response, "my-replica-set");
+  }
+
+  #[tokio::test]
+  async fn given_wrong_name_when_get_replica_set_then_no_rs_error() {
+    // Given
+    let clusters = Clusters {
+      results: vec![Shard {
+        userAlias: "my-rs-shard-00".to_string(),
+        typeName: "".to_string(),
+        replicaSetName: Some("my-replica-set".to_string()),
+      }],
+    };
+    let _m = mock("GET", "/my-group-key/processes")
+      .with_status(200)
+      .with_header("content-type", "application/json; charset=utf-8")
+      .with_body(serde_json::to_string(&clusters).unwrap())
+      .create();
+
+    // When
+    let replica_set_not_found_error = ftdc_data_service()
+      .get_replica_set("my-group-key", "another-rs-shard-00", "", "")
+      .await
+      .unwrap_err()
+      .to_string();
+
+    // Then
+    assert_eq!(
+      replica_set_not_found_error,
+      "No replica set found that corresponds to another-rs-shard-00"
+    );
+  }
+
+  #[tokio::test]
+  async fn given_no_processes_in_the_given_group_when_get_replica_set_then_no_rs_error() {
+    // Given
+    let clusters = Clusters { results: vec![] };
+    let _m = mock("GET", "/my-group-key/processes")
+      .with_status(200)
+      .with_header("content-type", "application/json; charset=utf-8")
+      .with_body(serde_json::to_string(&clusters).unwrap())
+      .create();
+
+    // When
+    let replica_set_not_found_error = ftdc_data_service()
+      .get_replica_set("my-group-key", "another-rs-shard-00", "", "")
+      .await
+      .unwrap_err()
+      .to_string();
+
+    // Then
+    assert_eq!(
+      replica_set_not_found_error,
+      "No replica set found that corresponds to another-rs-shard-00"
+    );
+  }
+
+  #[tokio::test]
+  async fn given_replica_set_when_create_ftdc_job_then_give_job_id() {
+    // Given
+    let job_id = JobId {
+      id: String::from("new-job-id-73"),
+    };
+    let _m = mock("POST", "/my-group-key/logCollectionJobs")
+      .with_status(201)
+      .with_header("content-type", "application/json; charset=utf-8")
+      .with_body(serde_json::to_string(&job_id).unwrap())
+      .create();
+
+    // When
+    let response = ftdc_data_service()
+      .create_ftdc_job("my-group-key", "another-rs-shard-00", 10, "", "")
+      .await
+      .unwrap();
+
+    // Then
+    assert_eq!(
+      response,
+      JobId {
+        id: String::from("new-job-id-73")
+      }
+    );
+  }
+
+  #[tokio::test]
+  async fn given_job_id_when_check_job_state_then_give_success() {
+    // Given
+    let job_id = "new-job-id-73";
+    let job_status = JobStatus {
+      id: "any id",
+      downloadUrl: "download from here",
+      status: "SUCCESS",
+    };
+    let spinner = ProgressBar::new_spinner();
+    let _m = mock("GET", "/my-group-key/logCollectionJobs/new-job-id-73")
+      .with_status(200)
+      .with_header("content-type", "application/json; charset=utf-8")
+      .with_body(serde_json::to_string(&job_status).unwrap())
+      .create();
+
+    // When
+    let response = ftdc_data_service()
+      .check_job_state("my-group-key", job_id, &spinner, "", "")
+      .await
+      .unwrap();
+
+    // Then
+    assert_eq!(response, String::from("download from here"));
   }
 }

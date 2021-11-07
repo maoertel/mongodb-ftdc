@@ -38,18 +38,18 @@ pub struct Clusters {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Shard {
   pub(crate) userAlias: String,
-  typeName: String,
+  pub(crate) typeName: String,
   pub(crate) replicaSetName: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct JobId {
   pub(crate) id: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct JobStatus<'a> {
-  id: &'a str,
+  pub(crate) id: &'a str,
   pub(crate) downloadUrl: &'a str,
   pub(crate) status: &'a str,
 }
