@@ -52,5 +52,5 @@ async fn main() -> Result<(), Error> {
       &opts.private,
     )
     .await
-    .map(|download_path| println!("Downloaded to: `{}`", download_path))
+    .map(|download_path| println!("Downloaded to: `{download_path}`"))
 }

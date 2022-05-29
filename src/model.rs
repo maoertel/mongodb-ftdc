@@ -56,11 +56,11 @@ pub struct JobStatus<'a> {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum JobState {
-  SUCCESS,
-  FAILURE,
-  IN_PROGRESS,
-  MARKED_FOR_EXPIRY,
-  EXPIRED,
+  Succcess,
+  Failure,
+  InProgress,
+  MarkedForExpiry,
+  Expired,
 }
 
 impl FromStr for JobState {
@@ -68,11 +68,11 @@ impl FromStr for JobState {
 
   fn from_str(s: &str) -> Result<Self, Error> {
     match s {
-      "SUCCESS" => Ok(JobState::SUCCESS),
-      "FAILURE" => Ok(JobState::FAILURE),
-      "IN_PROGRESS" => Ok(JobState::IN_PROGRESS),
-      "MARKED_FOR_EXPIRY" => Ok(JobState::MARKED_FOR_EXPIRY),
-      "EXPIRED" => Ok(JobState::EXPIRED),
+      "SUCCESS" => Ok(JobState::Succcess),
+      "FAILURE" => Ok(JobState::Failure),
+      "IN_PROGRESS" => Ok(JobState::InProgress),
+      "MARKED_FOR_EXPIRY" => Ok(JobState::MarkedForExpiry),
+      "EXPIRED" => Ok(JobState::Expired),
       invalid => Err(InvalidJobState(invalid.to_string())),
     }
   }

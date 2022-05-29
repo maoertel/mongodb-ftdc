@@ -34,7 +34,7 @@ async fn main() -> Result<(), Error> {
       private,
     )
     .await
-    .map(|download_path| println!("Downloaded to: `{}`", download_path))
+    .map(|download_path| println!("Downloaded to: `{download_path}`"))
 }
 ```
 
