@@ -12,12 +12,12 @@ license = "MIT"
 repository = "https://github.com/maoertel/mongodb-ftdc"
 
 [dependencies]
-async-recursion = "0.3"
+async-recursion = "1.0.0"
 async-trait = "0.1"
 futures = { version = "0.3", default-features = true }
 
 reqwest = "0.11"
-diqwest = "0.1"
+diqwest = "1.0.0"
 http = "0.2"
 
 serde = { version = "1", features = ["derive"] }
@@ -30,7 +30,7 @@ clap = { version = "3.0.0-beta.5", optional = true }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }
-mockito = "0.30.0"
+mockito = "0.31.0"
 
 [features]
 build-binary = ["tokio", "clap"]
