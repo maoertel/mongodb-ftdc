@@ -215,7 +215,10 @@ impl FtdcDataService {
 
         spinner.finish_with_message(format!("SUCCESS – FTDC data for job with id {job_id} downloaded."));
 
-        Ok(format!("{}/{}", env::current_dir()?.display(), file_name))
+        Ok(format!(
+          "{current_dir}/{file_name}",
+          current_dir = env::current_dir()?.display()
+        ))
       }
       _ => Err(Error::Download(format!(
         "Something went wrong downloading the FTDC data. Try to download at: {url}. Status code: {status}. Body: {body}",
