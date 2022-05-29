@@ -2,16 +2,16 @@ use std::fmt::{Display, Formatter, Result};
 
 #[derive(Debug)]
 pub enum Error {
-  DiqwestError(diqwest::error::Error),
-  ReqwestError(reqwest::Error),
-  JsonError(serde_json::Error),
-  IoError(std::io::Error),
+  Diqwest(diqwest::error::Error),
+  Reqwest(reqwest::Error),
+  Json(serde_json::Error),
+  Io(std::io::Error),
   InvalidJobState(String),
-  DownloadError(String),
-  CheckJobStatusError(String),
-  CreateJobError(String),
-  ReplicaSetNotFoundError(String),
-  MongoJobError(String),
+  Download(String),
+  CheckJobStatus(String),
+  CreateJob(String),
+  ReplicaSetNotFound(String),
+  MongoJob(String),
 }
 
 impl std::error::Error for Error {}
@@ -19,40 +19,40 @@ impl std::error::Error for Error {}
 impl Display for Error {
   fn fmt(&self, f: &mut Formatter<'_>) -> Result {
     match self {
-      Error::DiqwestError(e) => std::fmt::Display::fmt(e, f),
-      Error::ReqwestError(e) => std::fmt::Display::fmt(e, f),
-      Error::JsonError(e) => std::fmt::Display::fmt(e, f),
-      Error::IoError(e) => std::fmt::Display::fmt(e, f),
+      Error::Diqwest(e) => std::fmt::Display::fmt(e, f),
+      Error::Reqwest(e) => std::fmt::Display::fmt(e, f),
+      Error::Json(e) => std::fmt::Display::fmt(e, f),
+      Error::Io(e) => std::fmt::Display::fmt(e, f),
       Error::InvalidJobState(e) => std::fmt::Display::fmt(e, f),
-      Error::DownloadError(e) => std::fmt::Display::fmt(e, f),
-      Error::CheckJobStatusError(e) => std::fmt::Display::fmt(e, f),
-      Error::CreateJobError(e) => std::fmt::Display::fmt(e, f),
-      Error::ReplicaSetNotFoundError(e) => std::fmt::Display::fmt(e, f),
-      Error::MongoJobError(e) => std::fmt::Display::fmt(e, f),
+      Error::Download(e) => std::fmt::Display::fmt(e, f),
+      Error::CheckJobStatus(e) => std::fmt::Display::fmt(e, f),
+      Error::CreateJob(e) => std::fmt::Display::fmt(e, f),
+      Error::ReplicaSetNotFound(e) => std::fmt::Display::fmt(e, f),
+      Error::MongoJob(e) => std::fmt::Display::fmt(e, f),
     }
   }
 }
 
 impl From<diqwest::error::Error> for Error {
   fn from(diqwest_error: diqwest::error::Error) -> Self {
-    Error::DiqwestError(diqwest_error)
+    Error::Diqwest(diqwest_error)
   }
 }
 
 impl From<reqwest::Error> for Error {
   fn from(reqwest_error: reqwest::Error) -> Self {
-    Error::ReqwestError(reqwest_error)
+    Error::Reqwest(reqwest_error)
   }
 }
 
 impl From<serde_json::Error> for Error {
   fn from(serde_json_error: serde_json::Error) -> Self {
-    Error::JsonError(serde_json_error)
+    Error::Json(serde_json_error)
   }
 }
 
 impl From<std::io::Error> for Error {
   fn from(io_error: std::io::Error) -> Self {
-    Error::IoError(io_error)
+    Error::Io(io_error)
   }
 }
