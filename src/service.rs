@@ -67,13 +67,13 @@ impl FtdcLoader for FtdcDataService {
 
     let check_job_status_spinner = SpinnerHelper::create(format!("Check job status of job with id: {job_id}"));
     let _download_url = self
-      .check_job_state(group_key, &job_id, &check_job_status_spinner, public, private)
+      .check_job_state(group_key, &job_id, &check_job_status_spinner?, public, private)
       .await?;
 
     let download_ftdc_data_spinner = SpinnerHelper::create(format!("Start to download FTDC data for job with id: {job_id}"));
 
     self
-      .download_ftdc_data(group_key, &job_id, &replica_set, &download_ftdc_data_spinner, public, private)
+      .download_ftdc_data(group_key, &job_id, &replica_set, &download_ftdc_data_spinner?, public, private)
       .await
   }
 }

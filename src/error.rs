@@ -6,6 +6,7 @@ pub enum Error {
   Reqwest(reqwest::Error),
   Json(serde_json::Error),
   Io(std::io::Error),
+  IndicatifTemplate(indicatif::style::TemplateError),
   InvalidJobState(String),
   Download(String),
   CheckJobStatus(String),
@@ -29,6 +30,7 @@ impl Display for Error {
       Error::CreateJob(e) => std::fmt::Display::fmt(e, f),
       Error::ReplicaSetNotFound(e) => std::fmt::Display::fmt(e, f),
       Error::MongoJob(e) => std::fmt::Display::fmt(e, f),
+      Error::IndicatifTemplate(e) => std::fmt::Display::fmt(e, f),
     }
   }
 }
@@ -54,5 +56,11 @@ impl From<serde_json::Error> for Error {
 impl From<std::io::Error> for Error {
   fn from(io_error: std::io::Error) -> Self {
     Error::Io(io_error)
+  }
+}
+
+impl From<indicatif::style::TemplateError> for Error {
+  fn from(template_error: indicatif::style::TemplateError) -> Self {
+    Error::IndicatifTemplate(template_error)
   }
 }
