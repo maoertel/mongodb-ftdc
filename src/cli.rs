@@ -18,7 +18,7 @@ pub(crate) struct Cli {
     #[clap(long, short)]
     pub(crate) replica_set_name: String,
     /// Optional byte size of the downloaded job. If the data in your job is not going back in
-    /// time enough: increase the byte size. [default: 10.000.000]
+    /// time enough: increase the byte size.
     #[clap(long, short, default_value = "10000000")]
     pub(crate) size: u64,
     /// The public key of your Atlas API key.
