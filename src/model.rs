@@ -16,7 +16,7 @@ pub struct LogCollectionJob<'a> {
 }
 
 impl LogCollectionJob<'_> {
-    pub(crate) fn from(replica_set_name: &str, bytes: u64) -> LogCollectionJob {
+    pub fn from(replica_set_name: &str, bytes: u64) -> LogCollectionJob {
         LogCollectionJob {
             resource_name: replica_set_name,
             size_requested_per_file_bytes: bytes,
@@ -35,22 +35,22 @@ pub struct Clusters {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Shard {
-    pub(crate) user_alias: String,
-    pub(crate) type_name: String,
-    pub(crate) replica_set_name: Option<String>,
+    pub user_alias: String,
+    pub type_name: String,
+    pub replica_set_name: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct JobId {
-    pub(crate) id: String,
+    pub id: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct JobStatus<'a> {
-    pub(crate) id: &'a str,
-    pub(crate) download_url: &'a str,
-    pub(crate) status: &'a str,
+    pub id: &'a str,
+    pub download_url: &'a str,
+    pub status: &'a str,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
