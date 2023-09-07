@@ -8,11 +8,11 @@ use error::Error;
 use reqwest::Client;
 use service::{FtdcDataService, FtdcLoader};
 
-/// Loading FTDC data (full time diagnostic data capture) from a particular db cluster to
-/// investigate deeper (e.g. with keyhole).
+/// Loading FTDC data (full time diagnostic data capture) from a particular replica set or dedicated
+/// shard of a sharded clutser to investigate deeper (e.g. with keyhole).
 #[derive(Parser)]
 #[clap(version = "0.1.3", author = "Mathias Oertel <mathias.oertel@pm.me>")]
-struct Opts {
+struct Cli {
   /// The group key (or: project id) the respective cluster belongs too. It is encoded into
   /// the link you get from atlas when selecting the specific cluster on Atlas UI (e.g.
   /// `cloud.mongodb.com/v2/{group key}#clusters`).
@@ -37,9 +37,11 @@ struct Opts {
   private: String,
 }
 
+const DEFAULT_SIZE: u64 = 10_000_000;
+
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-  let opts: Opts = Opts::parse();
+  let opts: Cli = Cli::parse();
 
   let service = FtdcDataService { client: Client::new() };
 
@@ -47,7 +49,7 @@ async fn main() -> Result<(), Error> {
     .get_ftdc_data(
       &opts.group_key,
       &opts.replica_set_name,
-      opts.size.unwrap_or(10_000_000),
+      opts.size.unwrap_or(DEFAULT_SIZE),
       &opts.public,
       &opts.private,
     )

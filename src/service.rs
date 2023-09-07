@@ -3,35 +3,17 @@ use std::fs::File;
 use std::io;
 use std::str::FromStr;
 use std::thread;
+use std::time;
 
 use async_recursion::async_recursion;
 use async_trait::async_trait;
 use diqwest::WithDigestAuth;
 use indicatif::ProgressBar;
 use reqwest::{Client, StatusCode};
-use std::time;
 
-use crate::error;
-use crate::model;
-use crate::progress;
-
-use error::Error;
-use model::{Clusters, JobId, JobState, JobStatus, LogCollectionJob, Shard};
-use progress::SpinnerHelper;
-
-#[cfg(test)]
-use mockito::server_url;
-
-#[cfg(not(test))]
-const MONGODB_URL: &str = "https://cloud.mongodb.com/api/atlas/v1.0/groups";
-
-fn url() -> String {
-  #[cfg(not(test))]
-  let url = String::from(MONGODB_URL);
-  #[cfg(test)]
-  let url = server_url();
-  url
-}
+use crate::error::Error;
+use crate::model::{Clusters, JobId, JobState, JobStatus, LogCollectionJob, Shard};
+use crate::progress::SpinnerHelper;
 
 #[async_trait]
 pub trait FtdcLoader {
@@ -73,7 +55,14 @@ impl FtdcLoader for FtdcDataService {
     let download_ftdc_data_spinner = SpinnerHelper::create(format!("Start to download FTDC data for job with id: {job_id}"));
 
     self
-      .download_ftdc_data(group_key, &job_id, &replica_set, &download_ftdc_data_spinner?, public, private)
+      .download_ftdc_data(
+        group_key,
+        &job_id,
+        &replica_set,
+        &download_ftdc_data_spinner?,
+        public,
+        private,
+      )
       .await
   }
 }
@@ -99,12 +88,12 @@ impl FtdcDataService {
         let shards: Vec<Shard> = shards
           .into_iter()
           .filter(|s| {
-            s.replicaSetName.is_some()
-              && (s.userAlias.contains(replica_set_name) || s.replicaSetName == Some(replica_set_name.to_string()))
+            s.replica_set_name.is_some()
+              && (s.user_alias.contains(replica_set_name) || s.replica_set_name == Some(replica_set_name.to_string()))
           })
           .collect();
 
-        shards.first().and_then(|s| s.replicaSetName.as_ref()).iter().fold(
+        shards.first().and_then(|s| s.replica_set_name.as_ref()).iter().fold(
           Err(Error::ReplicaSetNotFound(format!("No replica set found that corresponds to {replica_set_name}"))),
           |_, s| Ok(s.to_string()),
         )
@@ -126,12 +115,11 @@ impl FtdcDataService {
   ) -> Result<JobId, Error> {
     println!("Starting FTDC data job for ReplicaSet: {replica_set}");
 
-    let body = serde_json::to_string::<LogCollectionJob>(&LogCollectionJob::from(replica_set, byte_size))?;
     let create_ftdc_job = self
       .client
       .post(format!("{url}/{group_key}/logCollectionJobs", url = url()))
       .header("Content-type", "application/json; charset=utf-8")
-      .body(body)
+      .json(&LogCollectionJob::from(replica_set, byte_size))
       .send_with_digest_auth(public, private)
       .await?;
 
@@ -175,7 +163,7 @@ impl FtdcDataService {
           }
           JobState::Succcess | JobState::MarkedForExpiry => {
             spinner.finish_with_message(format!("SUCCESS – FTDC data for job with id {job_id} will be downloaded."));
-            Ok(String::from(job_status.downloadUrl))
+            Ok(String::from(job_status.download_url))
           }
           JobState::Failure | JobState::Expired => {
             spinner.abandon_with_message(format!("FAILURE – Something went wrong creating job with id {job_id}."));
@@ -231,6 +219,20 @@ impl FtdcDataService {
 }
 
 #[cfg(test)]
+use mockito::server_url;
+
+#[cfg(not(test))]
+const MONGODB_URL: &str = "https://cloud.mongodb.com/api/atlas/v1.0/groups";
+
+fn url() -> String {
+  #[cfg(not(test))]
+  let url = String::from(MONGODB_URL);
+  #[cfg(test)]
+  let url = server_url();
+  url
+}
+
+#[cfg(test)]
 mod tests {
   use crate::model::{Clusters, JobId, JobStatus, Shard};
   use crate::service::FtdcDataService;
@@ -247,9 +249,9 @@ mod tests {
     // Given
     let clusters = Clusters {
       results: vec![Shard {
-        userAlias: "something that does not matter".to_string(),
-        typeName: "".to_string(),
-        replicaSetName: Some("my-replica-set".to_string()),
+        user_alias: "something that does not matter".to_string(),
+        type_name: "".to_string(),
+        replica_set_name: Some("my-replica-set".to_string()),
       }],
     };
     let _m = mock("GET", "/my-group-key/processes")
@@ -273,9 +275,9 @@ mod tests {
     // Given
     let clusters = Clusters {
       results: vec![Shard {
-        userAlias: "my-rs-shard-00".to_string(),
-        typeName: "".to_string(),
-        replicaSetName: Some("my-replica-set".to_string()),
+        user_alias: "my-rs-shard-00".to_string(),
+        type_name: "".to_string(),
+        replica_set_name: Some("my-replica-set".to_string()),
       }],
     };
     let _m = mock("GET", "/my-group-key/processes")
@@ -299,9 +301,9 @@ mod tests {
     // Given
     let clusters = Clusters {
       results: vec![Shard {
-        userAlias: "my-rs-shard-00".to_string(),
-        typeName: "".to_string(),
-        replicaSetName: Some("my-replica-set".to_string()),
+        user_alias: "my-rs-shard-00".to_string(),
+        type_name: "".to_string(),
+        replica_set_name: Some("my-replica-set".to_string()),
       }],
     };
     let _m = mock("GET", "/my-group-key/processes")
@@ -381,7 +383,7 @@ mod tests {
     let job_id = "new-job-id-73";
     let job_status = JobStatus {
       id: "any id",
-      downloadUrl: "download from here",
+      download_url: "download from here",
       status: "SUCCESS",
     };
     let spinner = ProgressBar::new_spinner();
