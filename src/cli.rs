@@ -3,6 +3,7 @@ use clap::Parser;
 /// Loading FTDC data (full time diagnostic data capture) from a particular replica set or dedicated
 /// shard of a sharded clutser to investigate deeper (e.g. with keyhole).
 #[derive(Parser)]
+#[clap(author, version, about, long_about = None)]
 pub(crate) struct Cli {
     /// The group key (or: project id) the respective cluster belongs too. It is encoded into
     /// the link you get from atlas when selecting the specific cluster on Atlas UI (e.g.
