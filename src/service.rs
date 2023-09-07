@@ -1,3 +1,4 @@
+#![allow(clippy::manual_try_fold)]
 use std::env;
 use std::fs::File;
 use std::io;
