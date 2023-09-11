@@ -38,6 +38,14 @@ brew tap maoertel/tap
 brew install ftdc
 ```
 
+#### Cargo install
+
+If you have `cargo` installed just execute the following command to install `ftdc` on your machine.
+
+```bash
+cargo install ftdc
+```
+
 #### Build yourself
 
 Check this repo out and execute the following command:
@@ -49,3 +57,7 @@ cargo build --bin ftdc --features "build-binary" --release
 #### Download the binaries
 
 You can download binaries for macOS (amd4/arm64) or Linux (amd64) from the github [release page](https://github.com/maoertel/mongodb-ftdc/releases).
+
+## License
+
+[MIT](./MIT-LICENSE)
