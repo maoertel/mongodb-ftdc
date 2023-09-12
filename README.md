@@ -21,7 +21,7 @@ To download FTDC data from a mongodb cluster you need to provide some input to t
 ```bash
 ftdc --group-key <group key> \
   --replica-set-name <rs name> \
-  --public <puclib key> \
+  --public <public key> \
   --private <private key>
 ```
 
