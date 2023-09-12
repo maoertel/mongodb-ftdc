@@ -11,7 +11,7 @@ const TICK_TIME: u64 = 120;
 impl SpinnerHelper {
     pub fn create(message: String) -> Result<ProgressBar, Error> {
         let spinner = ProgressBar::new_spinner();
-        spinner.enable_steady_tick(Duration::from_secs(TICK_TIME));
+        spinner.enable_steady_tick(Duration::from_millis(TICK_TIME));
         spinner.set_style(
             ProgressStyle::default_spinner()
                 // For more spinners check out the cli-spinners project:
