@@ -16,13 +16,13 @@ To download FTDC data from a mongodb cluster you need to provide some input to t
 
 1. **Group key:** The group key (or: project id) the respective cluster belongs too. It is encoded into the link you get from atlas when selecting the specific cluster on Atlas UI (e.g.`cloud.mongodb.com/v2/{group key}/clusters`)
 2. **Replicaset name:** The name of the replica set the data should be loaded from. You can either provide the direct targeted replica set name (e.g. `atlas-<something>-shard-0`) or the name of the shard (e.g `some-name-shard-00`). Do not forget the number here as it qualifies the shard in case you want data from a sharded cluster. For a standalone replica set it is `00` but lets say for a sharded cluster with 3 shards it would be `00`, `01`, `02`.
-3. **API key:** You need to have a valid API key for at least the cluster you want to download FTDC data from.
+3. **API key:** You need to have a valid API key for at least the cluster you want to download FTDC data from. The credential can be provided by parameters (`--atlas-public-key`, `--atlas-private-key`) or environment variables (`ATLAS_PUBLIC_KEY`, `ATLAS_PRIVATE_KEY`)
 
 ```bash
 ftdc --group-key <group key> \
   --replica-set-name <rs name> \
-  --public <public key> \
-  --private <private key>
+  --atlas-public-key <public key> \
+  --atlas-private-key <private key>
 ```
 
 The data is downloaded to the current directory as a `*.tar.gz` file.
