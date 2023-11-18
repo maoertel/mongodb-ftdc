@@ -22,8 +22,8 @@
 //!   let group_key = "...";
 //!   let replica_set_name = "...";
 //!   let size = 10_000_000
-//!   let public = "...";
-//!   let private = "...";
+//!   let atlas_public_key = "...";
+//!   let atlas_private_key = "...";
 //!
 //!   let service = FtdcDataService { client: Client::new() };
 //!
@@ -32,8 +32,8 @@
 //!       group_key,
 //!       replica_set_name,
 //!       size,
-//!       public,
-//!       private,
+//!       atlas_public_key,
+//!       atlas_private_key,
 //!     )
 //!     .await
 //!     .map(|download_path| println!("Downloaded to: `{download_path}`"))
