@@ -22,9 +22,9 @@ pub(crate) struct Cli {
     #[clap(long, short, default_value = "10000000")]
     pub(crate) size: u64,
     /// The public key of your Atlas API key.
-    #[clap(long, env)]
-    pub(crate) atlas_public_key: String, // --atlas-public-key or ATLAS_PUBLIC_KEY env var
+    #[clap(long, env = "ATLAS_PUBLIC_KEY")]
+    pub(crate) atlas_public_key: String,
     /// The private key of your Atlas API key.
-    #[clap(long, env)]
-    pub(crate) atlas_private_key: String, // --atlas-private-key or ATLAS_PRIVATE_KEY env var
+    #[clap(long, env = "ATLAS_PRIVATE_KEY")]
+    pub(crate) atlas_private_key: String,
 }
