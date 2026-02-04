@@ -5,7 +5,8 @@ mod progress;
 mod service;
 
 use cli::Cli;
-use service::{FtdcDataService, FtdcLoader};
+use service::FtdcDataService;
+use service::FtdcLoader;
 
 use clap::Parser;
 use error::Error;
@@ -16,7 +17,7 @@ async fn main() -> Result<(), Error> {
     let Cli { group_key, replica_set_name, size, atlas_public_key, atlas_private_key } =
         Cli::parse();
 
-    let service = FtdcDataService { client: Client::new() };
+    let service = FtdcDataService::new(Client::new());
 
     service
         .get_ftdc_data(

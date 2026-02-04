@@ -1,6 +1,7 @@
 use std::time::Duration;
 
-use indicatif::{ProgressBar, ProgressStyle};
+use indicatif::ProgressBar;
+use indicatif::ProgressStyle;
 
 use crate::error::Error;
 

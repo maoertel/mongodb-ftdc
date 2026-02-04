@@ -1,4 +1,6 @@
-use std::fmt::{Display, Formatter, Result};
+use std::fmt::Display;
+use std::fmt::Formatter;
+use std::fmt::Result;
 
 #[derive(Debug)]
 pub enum Error {
