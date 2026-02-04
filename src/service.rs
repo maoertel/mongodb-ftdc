@@ -8,7 +8,7 @@ use std::time;
 
 use async_recursion::async_recursion;
 use async_trait::async_trait;
-use diqwest::WithDigestAuth;
+use diqwest::{DigestAuthSession, WithDigestAuth};
 use indicatif::ProgressBar;
 use reqwest::{Client, StatusCode};
 
@@ -56,24 +56,21 @@ impl FtdcLoader for FtdcDataService {
         public: &str,
         private: &str,
     ) -> Result<String, Error> {
+        // Create a cached digest auth session for all requests
+        let session = DigestAuthSession::new(public, private);
+
         let replica_set = self
-            .get_replica_set(group_key, replica_set_name, public, private)
+            .get_replica_set(group_key, replica_set_name, &session)
             .await?;
         let job_id = self
-            .create_ftdc_job(group_key, &replica_set, byte_size, public, private)
+            .create_ftdc_job(group_key, &replica_set, byte_size, &session)
             .await?
             .id;
 
         let check_job_status_spinner =
             SpinnerHelper::create(format!("Check job status of job with id: {job_id}"));
         let _download_url = self
-            .check_job_state(
-                group_key,
-                &job_id,
-                &check_job_status_spinner?,
-                public,
-                private,
-            )
+            .check_job_state(group_key, &job_id, &check_job_status_spinner?, &session)
             .await?;
 
         let download_ftdc_data_spinner = SpinnerHelper::create(format!(
@@ -85,8 +82,7 @@ impl FtdcLoader for FtdcDataService {
             &job_id,
             &replica_set,
             &download_ftdc_data_spinner?,
-            public,
-            private,
+            &session,
         )
         .await
     }
@@ -97,13 +93,12 @@ impl FtdcDataService {
         &self,
         group_key: &str,
         replica_set_name: &str,
-        public: &str,
-        private: &str,
+        session: &DigestAuthSession,
     ) -> Result<String, Error> {
         let processes = self
             .client
             .get(format!("{}/{group_key}/processes", self.base_url))
-            .send_digest_auth((public, private))
+            .send_digest_auth(session)
             .await?;
 
         match processes.status() {
@@ -142,8 +137,7 @@ impl FtdcDataService {
         group_key: &str,
         replica_set: &str,
         byte_size: u64,
-        public: &str,
-        private: &str,
+        session: &DigestAuthSession,
     ) -> Result<JobId, Error> {
         println!("Starting FTDC data job for ReplicaSet: {replica_set}");
 
@@ -152,7 +146,7 @@ impl FtdcDataService {
             .post(format!("{}/{group_key}/logCollectionJobs", self.base_url))
             .header("Content-type", "application/json; charset=utf-8")
             .json(&LogCollectionJob::from(replica_set, byte_size))
-            .send_digest_auth((public, private))
+            .send_digest_auth(session)
             .await?;
 
         match create_ftdc_job.status() {
@@ -173,8 +167,7 @@ impl FtdcDataService {
         group_key: &str,
         job_id: &str,
         spinner: &ProgressBar,
-        public: &str,
-        private: &str,
+        session: &DigestAuthSession,
     ) -> Result<String, Error> {
         let check_job_status = self
             .client
@@ -182,7 +175,7 @@ impl FtdcDataService {
                 "{}/{group_key}/logCollectionJobs/{job_id}",
                 self.base_url
             ))
-            .send_digest_auth((public, private))
+            .send_digest_auth(session)
             .await?;
 
         match check_job_status.status() {
@@ -194,7 +187,7 @@ impl FtdcDataService {
                     JobState::InProgress => {
                         spinner.set_message(format!("IN_PROGRESS – job id: {job_id}"));
                         thread::sleep(time::Duration::from_millis(3000));
-                        self.check_job_state(group_key, job_id, spinner, public, private)
+                        self.check_job_state(group_key, job_id, spinner, session)
                             .await
                     }
                     JobState::Succcess | JobState::MarkedForExpiry => {
@@ -226,8 +219,7 @@ impl FtdcDataService {
         job_id: &str,
         replica_set: &str,
         spinner: &ProgressBar,
-        public: &str,
-        private: &str,
+        session: &DigestAuthSession,
     ) -> Result<String, Error> {
         let download_url = format!(
             "{}/{group_key}/logCollectionJobs/{job_id}/download",
@@ -236,7 +228,7 @@ impl FtdcDataService {
         let response = self
             .client
             .get(&download_url)
-            .send_digest_auth((public, private))
+            .send_digest_auth(session)
             .await?;
 
         match response.status() {
@@ -275,6 +267,7 @@ impl FtdcDataService {
 mod tests {
     use crate::model::{Clusters, JobId, JobStatus, Shard};
     use crate::service::FtdcDataService;
+    use diqwest::DigestAuthSession;
     use indicatif::ProgressBar;
     use mockito::Server;
     use reqwest::Client;
@@ -301,10 +294,11 @@ mod tests {
             .with_body(serde_json::to_string(&clusters).unwrap())
             .create_async()
             .await;
+        let session = DigestAuthSession::new("", "");
 
         // When
         let response = ftdc_data_service(server.url())
-            .get_replica_set("my-group-key", "my-replica-set", "", "")
+            .get_replica_set("my-group-key", "my-replica-set", &session)
             .await
             .unwrap();
 
@@ -330,10 +324,11 @@ mod tests {
             .with_body(serde_json::to_string(&clusters).unwrap())
             .create_async()
             .await;
+        let session = DigestAuthSession::new("", "");
 
         // When
         let response = ftdc_data_service(server.url())
-            .get_replica_set("my-group-key", "my-rs-shard-00", "", "")
+            .get_replica_set("my-group-key", "my-rs-shard-00", &session)
             .await
             .unwrap();
 
@@ -359,10 +354,11 @@ mod tests {
             .with_body(serde_json::to_string(&clusters).unwrap())
             .create_async()
             .await;
+        let session = DigestAuthSession::new("", "");
 
         // When
         let replica_set_not_found_error = ftdc_data_service(server.url())
-            .get_replica_set("my-group-key", "another-rs-shard-00", "", "")
+            .get_replica_set("my-group-key", "another-rs-shard-00", &session)
             .await
             .unwrap_err()
             .to_string();
@@ -386,10 +382,11 @@ mod tests {
             .with_body(serde_json::to_string(&clusters).unwrap())
             .create_async()
             .await;
+        let session = DigestAuthSession::new("", "");
 
         // When
         let replica_set_not_found_error = ftdc_data_service(server.url())
-            .get_replica_set("my-group-key", "another-rs-shard-00", "", "")
+            .get_replica_set("my-group-key", "another-rs-shard-00", &session)
             .await
             .unwrap_err()
             .to_string();
@@ -413,10 +410,11 @@ mod tests {
             .with_body(serde_json::to_string(&job_id).unwrap())
             .create_async()
             .await;
+        let session = DigestAuthSession::new("", "");
 
         // When
         let response = ftdc_data_service(server.url())
-            .create_ftdc_job("my-group-key", "another-rs-shard-00", 10, "", "")
+            .create_ftdc_job("my-group-key", "another-rs-shard-00", 10, &session)
             .await
             .unwrap();
 
@@ -439,10 +437,11 @@ mod tests {
             .with_body(serde_json::to_string(&job_status).unwrap())
             .create_async()
             .await;
+        let session = DigestAuthSession::new("", "");
 
         // When
         let response = ftdc_data_service(server.url())
-            .check_job_state("my-group-key", job_id, &spinner, "", "")
+            .check_job_state("my-group-key", job_id, &spinner, &session)
             .await
             .unwrap();
 
