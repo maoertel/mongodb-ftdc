@@ -16,7 +16,7 @@ pub struct LogCollectionJob<'a> {
 }
 
 impl LogCollectionJob<'_> {
-    pub fn from(replica_set_name: &str, bytes: u64) -> LogCollectionJob {
+    pub fn from(replica_set_name: &str, bytes: u64) -> LogCollectionJob<'_> {
         LogCollectionJob {
             resource_name: replica_set_name,
             size_requested_per_file_bytes: bytes,
