@@ -88,7 +88,7 @@ impl FtdcDataService {
     ) -> Result<String, Error> {
         let processes = self
             .client
-            .get(&format!("{url}/{group_key}/processes", url = url()))
+            .get(format!("{url}/{group_key}/processes", url = url()))
             .send_with_digest_auth(public, private)
             .await?;
 
@@ -157,7 +157,7 @@ impl FtdcDataService {
     ) -> Result<String, Error> {
         let check_job_status = self
             .client
-            .get(&format!(
+            .get(format!(
                 "{url}/{group_key}/logCollectionJobs/{job_id}",
                 url = url()
             ))
