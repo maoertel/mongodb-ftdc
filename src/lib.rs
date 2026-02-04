@@ -25,7 +25,7 @@
 //!   let atlas_public_key = "...";
 //!   let atlas_private_key = "...";
 //!
-//!   let service = FtdcDataService { client: Client::new() };
+//!   let service = FtdcDataService::new(Client::new());
 //!
 //!   service
 //!     .get_ftdc_data(
