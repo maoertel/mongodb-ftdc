@@ -5,7 +5,8 @@ mod progress;
 mod service;
 
 use cli::Cli;
-use service::{FtdcDataService, FtdcLoader};
+use service::FtdcDataService;
+use service::FtdcLoader;
 
 use clap::Parser;
 use error::Error;

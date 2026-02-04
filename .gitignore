@@ -6,3 +6,4 @@ Cargo.lock
 tmp
 /**/.idea
 *.iml
+CLAUDE.md

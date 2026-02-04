@@ -8,12 +8,19 @@ use std::time;
 
 use async_recursion::async_recursion;
 use async_trait::async_trait;
-use diqwest::{DigestAuthSession, WithDigestAuth};
+use diqwest::DigestAuthSession;
+use diqwest::WithDigestAuth;
 use indicatif::ProgressBar;
-use reqwest::{Client, StatusCode};
+use reqwest::Client;
+use reqwest::StatusCode;
 
 use crate::error::Error;
-use crate::model::{Clusters, JobId, JobState, JobStatus, LogCollectionJob, Shard};
+use crate::model::Clusters;
+use crate::model::JobId;
+use crate::model::JobState;
+use crate::model::JobStatus;
+use crate::model::LogCollectionJob;
+use crate::model::Shard;
 use crate::progress::SpinnerHelper;
 
 const MONGODB_URL: &str = "https://cloud.mongodb.com/api/atlas/v1.0/groups";
@@ -56,7 +63,6 @@ impl FtdcLoader for FtdcDataService {
         public: &str,
         private: &str,
     ) -> Result<String, Error> {
-        // Create a cached digest auth session for all requests
         let session = DigestAuthSession::new(public, private);
 
         let replica_set = self
@@ -265,7 +271,10 @@ impl FtdcDataService {
 
 #[cfg(test)]
 mod tests {
-    use crate::model::{Clusters, JobId, JobStatus, Shard};
+    use crate::model::Clusters;
+    use crate::model::JobId;
+    use crate::model::JobStatus;
+    use crate::model::Shard;
     use crate::service::FtdcDataService;
     use diqwest::DigestAuthSession;
     use indicatif::ProgressBar;
